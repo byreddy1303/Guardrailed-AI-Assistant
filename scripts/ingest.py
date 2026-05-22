@@ -23,10 +23,12 @@ logger = get_logger(__name__)
 def ingest():
     store = get_vector_store()
 
-    existing = store._collection.count()
-    if existing > 0:
-        logger.info("ingest_skipped", reason="collection_already_populated", doc_count=existing)
-        print(f"Collection already has {existing} chunks. Skipping ingest.")
+    # Use the public get() API — _collection.count() is a private method
+    # that broke in earlier ChromaDB versions.
+    existing = store.get(limit=1)
+    if existing and existing.get("ids"):
+        logger.info("ingest_skipped", reason="collection_already_populated")
+        print("Collection already has documents. Skipping ingest.")
         return
 
     docs_path = Path(settings.docs_dir)

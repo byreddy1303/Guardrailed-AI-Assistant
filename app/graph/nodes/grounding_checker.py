@@ -4,13 +4,12 @@ import time
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
-import numpy as np
-
 from app.graph.state import PipelineState
 from app.services.llm import get_llm
 from app.services.embeddings import get_embeddings
 from app.config import settings
 from app.utils.logging import get_logger
+from app.utils.similarity import cosine_similarity
 
 logger = get_logger(__name__)
 
@@ -44,16 +43,6 @@ def _extract_claims(response: str) -> list[str]:
     return [s.strip() for s in sentences if len(s.strip()) > 10]
 
 
-def _cosine_similarity(a: list, b: list) -> float:
-    a_arr = np.array(a, dtype=float)
-    b_arr = np.array(b, dtype=float)
-    norm_a = np.linalg.norm(a_arr)
-    norm_b = np.linalg.norm(b_arr)
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-    return float(np.dot(a_arr, b_arr) / (norm_a * norm_b))
-
-
 def _embed_docs(docs) -> list[list[float]]:
     emb = get_embeddings()
     texts = [d.page_content for d in docs]
@@ -64,7 +53,9 @@ def grounding_checker_node(state: PipelineState) -> PipelineState:
     state = dict(state)
     start = time.monotonic()
 
-    response = state["redacted_response"]
+    # Use raw_response (pre-redaction) so that PII placeholder tokens
+    # like <EMAIL_ADDRESS> don't degrade cosine similarity against docs.
+    response = state["raw_response"]
     docs = state["retrieved_docs"]
 
     # If generator correctly refused, treat as grounded
@@ -96,7 +87,7 @@ def grounding_checker_node(state: PipelineState) -> PipelineState:
 
         for claim in claims:
             claim_vec = emb.embed_query(claim)
-            max_sim = max(_cosine_similarity(claim_vec, dv) for dv in doc_embeddings)
+            max_sim = max(cosine_similarity(claim_vec, dv) for dv in doc_embeddings)
             if max_sim < settings.grounding_similarity_threshold:
                 ungrounded.append(claim)
 
