@@ -18,10 +18,6 @@ def _route_after_input_guard(state: PipelineState) -> str:
     return "audit_logger"
 
 
-def _route_after_hitl(state: PipelineState) -> str:
-    return "audit_logger"
-
-
 def build_graph(use_checkpointer: bool = True) -> object:
     builder = StateGraph(PipelineState)
 

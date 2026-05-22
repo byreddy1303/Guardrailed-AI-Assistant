@@ -9,7 +9,7 @@ import sys
 import os
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -174,7 +174,7 @@ def eval_grounding_checker() -> dict:
 
 
 def format_report(results: list[dict]) -> str:
-    lines = ["=== EVAL REPORT ===", f"Run at: {datetime.utcnow().isoformat()}Z", ""]
+    lines = ["=== EVAL REPORT ===", f"Run at: {datetime.now(timezone.utc).isoformat()}", ""]
     for r in results:
         lines.append(r["guardrail"])
         lines.append(f"  Samples tested  : {r['samples']}")
