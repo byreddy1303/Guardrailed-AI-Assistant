@@ -1,4 +1,4 @@
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from app.services.embeddings import get_embeddings
 from app.config import settings
 from app.utils.logging import get_logger

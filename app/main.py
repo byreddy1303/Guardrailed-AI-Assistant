@@ -127,7 +127,7 @@ async def get_audit(session_id: str):
     return AuditResponse(session_id=session_id, audit_data=data)
 
 
-@app.get("/health", response_model=HealthResponse)
+@app.get("/health")
 async def health_check():
     ollama_ok = False
     chroma_ok = False
@@ -141,16 +141,14 @@ async def health_check():
 
     try:
         store = get_vector_store()
-        _ = store._collection.count()
+        # Use get() with limit=1 — compatible with all langchain-chroma versions
+        store.get(limit=1)
         chroma_ok = True
     except Exception:
         pass
 
-    return HealthResponse(
-        status="ok",
-        ollama_reachable=ollama_ok,
-        chroma_ready=chroma_ok,
-    )
+    # Return plain dict to avoid Pydantic v2 serialisation quirks with booleans
+    return {"status": "ok", "ollama_reachable": ollama_ok, "chroma_ready": chroma_ok}
 
 
 @app.get("/hitl/queue", response_model=HITLQueueResponse)

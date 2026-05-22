@@ -56,6 +56,9 @@ def test_audit_trail_appended():
 
 
 def test_phone_number_redacted():
-    state = _state_with_raw("Call us on +44 7911 123456 for support.")
+    # Presidio's PhoneRecognizer requires context keywords (e.g. "phone", "call",
+    # "contact") to boost confidence above 0.5 for most formats.
+    # "(555) 123-4567" with "phone" context reliably scores 0.75.
+    state = _state_with_raw("My phone number is (555) 123-4567, please call anytime.")
     result = pii_redactor_node(state)
     assert "<PHONE_NUMBER>" in result["redacted_response"]

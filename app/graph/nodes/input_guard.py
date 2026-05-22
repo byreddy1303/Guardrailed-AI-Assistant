@@ -16,9 +16,9 @@ from app.utils.logging import get_logger
 logger = get_logger(__name__)
 
 INJECTION_PATTERNS = [
-    r"ignore (all |previous |above )?instructions",
+    r"ignore\b.{0,40}\binstructions",   # catches "ignore all previous instructions" etc.
     r"you are now",
-    r"forget (your |all )?instructions",
+    r"forget\b.{0,20}\binstructions",   # catches "forget your instructions" etc.
     r"act as (a |an )?",
     r"jailbreak",
     r"do anything now",

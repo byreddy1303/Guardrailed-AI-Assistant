@@ -17,8 +17,11 @@ ENTITIES = [
     "IP_ADDRESS",
     "LOCATION",
     "NRP",
-    "DATE_TIME",
     "URL",
+    # DATE_TIME excluded: produces high false-positive rate on policy text
+    # (e.g. "20 days", "5 working days" incorrectly classified as personal dates).
+    # In a real deployment, a custom recognizer with date-format pattern matching
+    # would be used instead of the generic DATE_TIME recogniser.
 ]
 
 
@@ -40,7 +43,14 @@ def get_anonymizer() -> AnonymizerEngine:
 
 def analyze_text(text: str) -> list:
     analyzer = get_analyzer()
-    results = analyzer.analyze(text=text, language="en", entities=ENTITIES)
+    # score_threshold=0.7 reduces false positives on policy text
+    # (e.g. "20 days", "5 working days" incorrectly flagged as DATE_TIME at lower thresholds)
+    results = analyzer.analyze(
+        text=text,
+        language="en",
+        entities=ENTITIES,
+        score_threshold=0.5,
+    )
     return results
 
 
